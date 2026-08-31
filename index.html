@@ -136,36 +136,40 @@
   }
   @media (max-width: 700px) {
     .hero-scroll {
-      height: auto;
+      height: 300vh;
     }
     .hero {
-      position: static;
-      height: auto;
-      padding: 6vh 8vw 4vh;
-      display: block;
-    }
-    .scroll-cue {
-      display: none;
+      padding: 6vh 8vw;
     }
     .mobile-lines {
       display: block;
+      position: relative;
+      flex: 1;
     }
-    .mobile-line-block {
-      margin-top: 68vh;
+    .mobile-line-box {
+      position: relative;
+      overflow: hidden;
+      margin-top: 3vh;
     }
-    .mobile-line-block:first-child {
+    .mobile-line-box:first-child {
       margin-top: 0;
     }
-    .mobile-line-block h1 {
+    .mobile-line {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      margin: 0;
+      white-space: normal;
       font-family: 'Literata', serif;
       font-optical-sizing: auto;
       font-weight: 400;
-      font-size: clamp(2.4rem, 11vw, 3.6rem);
-      line-height: 1.15;
+      font-size: clamp(2.2rem, 10vw, 3.2rem);
+      line-height: 1.2;
       color: var(--paper);
-      margin: 0;
+      will-change: transform;
     }
-    .mobile-line-block h1 sup {
+    .mobile-line sup {
       font-family: 'Inter', sans-serif;
       font-size: 0.32em;
       font-weight: 600;
@@ -174,14 +178,6 @@
       position: relative;
       top: -0.6em;
       margin-left: 0.05em;
-    }
-    .mobile-scroll-cue {
-      font-size: 0.72rem;
-      letter-spacing: 0.08em;
-      color: var(--paper-dim);
-      text-transform: uppercase;
-      opacity: 0.7;
-      padding-bottom: 4vh;
     }
   }
 
@@ -332,7 +328,7 @@
 <body>
 
 <div style="position:fixed; top:8px; right:8px; z-index:9999; background:#B8985A; color:#161510; font-family:sans-serif; font-weight:700; font-size:13px; padding:4px 10px; border-radius:4px;">
-  v4
+  v6
 </div>
 
 <div class="frame">
@@ -354,10 +350,9 @@
       </div>
 
       <div class="mobile-lines">
-        <div class="mobile-line-block"><h1>Life is not a story.<sup>&#8482;</sup></h1></div>
-        <div class="mobile-line-block"><h1>You are not the hero.</h1></div>
-        <div class="mobile-line-block"><h1>There is no way to fail.</h1></div>
-        <div class="mobile-scroll-cue">Scroll</div>
+        <div class="mobile-line-box"><h1 class="mobile-line" data-i="0">Life is not a story.<sup>&#8482;</sup></h1></div>
+        <div class="mobile-line-box"><h1 class="mobile-line" data-i="1">You are not the hero.</h1></div>
+        <div class="mobile-line-box"><h1 class="mobile-line" data-i="2">There is no way to fail.</h1></div>
       </div>
 
       <div class="scroll-cue">Scroll</div>
@@ -421,98 +416,162 @@
     return window.innerWidth <= 700;
   }
 
-  // On mobile, the three lines are plain stacked blocks revealed by
-  // normal page scroll, no JS needed at all.
-  if (isMobile()) {
-    return;
-  }
-
   var container = document.querySelector('.hero-scroll');
-  var stage = document.querySelector('.morph-lines');
-  var lines = document.querySelectorAll('.morph-line');
-  var ticks = document.querySelectorAll('.tick');
   var scrollCue = document.querySelector('.scroll-cue');
-  var maxIndex = lines.length - 1;
-  var gapPx = 20;
-  var ticking = false;
-  var lineHeightPx = 0;
 
-  function fitLines() {
-    // Reset to a large reference size, measure, then scale every line
-    // uniformly so the widest line fills the available width.
-    var refSize = Math.min(window.innerWidth * 0.11, window.innerHeight * 0.16);
-    lines.forEach(function (line) {
-      line.style.fontSize = refSize + 'px';
-      line.style.transform = 'none';
-    });
-
-    var available = stage.clientWidth;
-    var widest = 0;
-    lines.forEach(function (line) {
-      widest = Math.max(widest, line.scrollWidth);
-    });
-
-    var scale = (available / widest) * 0.92;
-    var finalSize = refSize * scale;
-
-    lines.forEach(function (line) {
-      line.style.fontSize = finalSize + 'px';
-    });
-
-    lineHeightPx = lines[0].getBoundingClientRect().height;
-    stage.style.height = (lineHeightPx + 8) + 'px';
-  }
-
-  function render() {
-    var rect = container.getBoundingClientRect();
-    var total = container.offsetHeight - window.innerHeight;
-    var scrolled = -rect.top;
-    var progress = total > 0 ? scrolled / total : 0;
-    progress = Math.max(0, Math.min(1, progress));
-
-    var continuousIndex = progress * maxIndex;
-
-    lines.forEach(function (line, i) {
-      var delta = i - continuousIndex;
-      var offsetPercent = delta * 100;
-      var offsetGap = delta * gapPx;
-      line.style.transform = 'translateY(calc(' + offsetPercent + '% + ' + offsetGap + 'px))';
-    });
-
-    var activeIndex = Math.round(continuousIndex);
-    ticks.forEach(function (tick, i) {
-      tick.classList.toggle('active', i === activeIndex);
-    });
-
-    scrollCue.style.opacity = progress > 0.03 ? '0' : '0.7';
-
-    ticking = false;
-  }
-
-  function onScroll() {
-    if (!ticking) {
-      window.requestAnimationFrame(render);
-      ticking = true;
-    }
-  }
-
-  function onResize() {
-    if (isMobile()) {
-      return;
-    }
-    fitLines();
-    render();
-  }
-
-  if (document.fonts && document.fonts.ready) {
-    document.fonts.ready.then(onResize);
+  if (isMobile()) {
+    runMobile();
   } else {
+    runDesktop();
+  }
+
+  function runMobile() {
+    var boxes = document.querySelectorAll('.mobile-line-box');
+    var lines = document.querySelectorAll('.mobile-line');
+    var maxIndex = lines.length; // lets the last line fully exit too
+    var gapPx = 10;
+    var ticking = false;
+
+    function fitLines() {
+      boxes.forEach(function (box, i) {
+        var line = lines[i];
+        line.style.transform = 'none';
+        var h = line.getBoundingClientRect().height;
+        box.style.height = (h + 6) + 'px';
+      });
+    }
+
+    function render() {
+      var rect = container.getBoundingClientRect();
+      var total = container.offsetHeight - window.innerHeight;
+      var scrolled = -rect.top;
+      var progress = total > 0 ? scrolled / total : 0;
+      progress = Math.max(0, Math.min(1, progress));
+
+      var continuousIndex = progress * maxIndex;
+
+      lines.forEach(function (line, i) {
+        var delta = i - continuousIndex;
+        var offsetPercent = delta * 100;
+        var offsetGap = delta * gapPx;
+        line.style.transform = 'translateY(calc(' + offsetPercent + '% + ' + offsetGap + 'px))';
+      });
+
+      if (scrollCue) {
+        scrollCue.style.opacity = progress > 0.03 ? '0' : '0.7';
+      }
+
+      ticking = false;
+    }
+
+    function onScroll() {
+      if (!ticking) {
+        window.requestAnimationFrame(render);
+        ticking = true;
+      }
+    }
+
+    function onResize() {
+      fitLines();
+      render();
+    }
+
+    if (document.fonts && document.fonts.ready) {
+      document.fonts.ready.then(onResize);
+    } else {
+      onResize();
+    }
+
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', onResize);
     onResize();
   }
 
-  window.addEventListener('scroll', onScroll, { passive: true });
-  window.addEventListener('resize', onResize);
-  onResize();
+  function runDesktop() {
+    var stage = document.querySelector('.morph-lines');
+    var lines = document.querySelectorAll('.morph-line');
+    var ticks = document.querySelectorAll('.tick');
+    var maxIndex = lines.length - 1;
+    var gapPx = 20;
+    var ticking = false;
+    var lineHeightPx = 0;
+
+    function fitLines() {
+      // Reset to a large reference size, measure, then scale every line
+      // uniformly so the widest line fills the available width.
+      var refSize = Math.min(window.innerWidth * 0.11, window.innerHeight * 0.16);
+      lines.forEach(function (line) {
+        line.style.fontSize = refSize + 'px';
+        line.style.transform = 'none';
+      });
+
+      var available = stage.clientWidth;
+      var widest = 0;
+      lines.forEach(function (line) {
+        widest = Math.max(widest, line.scrollWidth);
+      });
+
+      var scale = (available / widest) * 0.92;
+      var finalSize = refSize * scale;
+
+      lines.forEach(function (line) {
+        line.style.fontSize = finalSize + 'px';
+      });
+
+      lineHeightPx = lines[0].getBoundingClientRect().height;
+      stage.style.height = (lineHeightPx + 8) + 'px';
+    }
+
+    function render() {
+      var rect = container.getBoundingClientRect();
+      var total = container.offsetHeight - window.innerHeight;
+      var scrolled = -rect.top;
+      var progress = total > 0 ? scrolled / total : 0;
+      progress = Math.max(0, Math.min(1, progress));
+
+      var continuousIndex = progress * maxIndex;
+
+      lines.forEach(function (line, i) {
+        var delta = i - continuousIndex;
+        var offsetPercent = delta * 100;
+        var offsetGap = delta * gapPx;
+        line.style.transform = 'translateY(calc(' + offsetPercent + '% + ' + offsetGap + 'px))';
+      });
+
+      var activeIndex = Math.round(continuousIndex);
+      ticks.forEach(function (tick, i) {
+        tick.classList.toggle('active', i === activeIndex);
+      });
+
+      if (scrollCue) {
+        scrollCue.style.opacity = progress > 0.03 ? '0' : '0.7';
+      }
+
+      ticking = false;
+    }
+
+    function onScroll() {
+      if (!ticking) {
+        window.requestAnimationFrame(render);
+        ticking = true;
+      }
+    }
+
+    function onResize() {
+      fitLines();
+      render();
+    }
+
+    if (document.fonts && document.fonts.ready) {
+      document.fonts.ready.then(onResize);
+    } else {
+      onResize();
+    }
+
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', onResize);
+    onResize();
+  }
 })();
 </script>
 </body>
