@@ -328,7 +328,7 @@
 <body>
 
 <div style="position:fixed; top:8px; right:8px; z-index:9999; background:#B8985A; color:#161510; font-family:sans-serif; font-weight:700; font-size:13px; padding:4px 10px; border-radius:4px;">
-  v12
+  v13
 </div>
 
 <div class="frame">
@@ -428,8 +428,11 @@
   function runMobile() {
     var boxes = document.querySelectorAll('.mobile-line-box');
     var lines = document.querySelectorAll('.mobile-line');
-    var segment = 1 / lines.length;
+    // Slightly less than lines.length on purpose: the last line is still
+    // mid-exit, not fully gone, right as the pinned section releases.
+    var maxIndex = lines.length - 0.15;
     var gapPx = 16;
+    var holdWidth = 0.32; // fraction of travel that stays perfectly still
     var ticking = false;
 
     function fitLines() {
@@ -441,6 +444,20 @@
       });
     }
 
+    // Flat hold near rest, smoothstep ease everywhere else: soft
+    // acceleration in and out instead of a linear, abrupt motion.
+    function shape(delta) {
+      var d = Math.max(-1, Math.min(1, delta));
+      var sign = d < 0 ? -1 : 1;
+      var ad = Math.abs(d);
+      if (ad <= holdWidth) {
+        return 0;
+      }
+      var t = (ad - holdWidth) / (1 - holdWidth);
+      var eased = t * t * (3 - 2 * t); // smoothstep
+      return sign * eased;
+    }
+
     function render() {
       var rect = container.getBoundingClientRect();
       var total = container.offsetHeight - window.innerHeight;
@@ -448,27 +465,13 @@
       var progress = total > 0 ? scrolled / total : 0;
       progress = Math.max(0, Math.min(1, progress));
 
+      var continuousIndex = progress * maxIndex;
+
       lines.forEach(function (line, i) {
-        var segStart = i * segment;
-        var local = (progress - segStart) / segment;
-        local = Math.max(0, Math.min(1, local));
-
-        // The first line starts already at rest (no entrance needed).
-        if (i === 0) {
-          local = 0.25 + local * 0.75;
-        }
-
-        var delta;
-        if (local < 0.25) {
-          delta = 1 - (local / 0.25);          // entering: 1 -> 0
-        } else if (local < 0.75) {
-          delta = 0;                           // holding: stays put for a beat
-        } else {
-          delta = -((local - 0.75) / 0.25);    // exiting: 0 -> -1 (fully clears)
-        }
-
-        var xPercent = delta * 100;
-        var xGap = delta * gapPx;
+        var rawDelta = i - continuousIndex;
+        var p = shape(rawDelta);
+        var xPercent = p * 100;
+        var xGap = p * gapPx;
         line.style.transform = 'translateX(calc(' + xPercent + '% + ' + xGap + 'px))';
       });
 
