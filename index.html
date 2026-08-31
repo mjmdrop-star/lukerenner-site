@@ -136,7 +136,7 @@
   }
   @media (max-width: 700px) {
     .hero-scroll {
-      height: 230vh;
+      height: 190vh;
     }
     .hero {
       padding: 6vh 8vw;
@@ -164,7 +164,7 @@
       font-family: 'Literata', serif;
       font-optical-sizing: auto;
       font-weight: 400;
-      font-size: clamp(2.2rem, 10vw, 3.2rem);
+      font-size: clamp(2.9rem, 13vw, 4.2rem);
       line-height: 1.2;
       color: var(--paper);
       will-change: transform;
@@ -328,7 +328,7 @@
 <body>
 
 <div style="position:fixed; top:8px; right:8px; z-index:9999; background:#B8985A; color:#161510; font-family:sans-serif; font-weight:700; font-size:13px; padding:4px 10px; border-radius:4px;">
-  v10
+  v11
 </div>
 
 <div class="frame">
@@ -428,7 +428,7 @@
   function runMobile() {
     var boxes = document.querySelectorAll('.mobile-line-box');
     var lines = document.querySelectorAll('.mobile-line');
-    var maxIndex = lines.length; // lets the last line fully exit too
+    var maxIndex = lines.length - 0.4; // let the next page start arriving before the last exit fully finishes
     var gapPx = 16;
     var ticking = false;
 
