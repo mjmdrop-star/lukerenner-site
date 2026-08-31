@@ -146,17 +146,14 @@
       position: relative;
       flex: 1;
     }
-    .mobile-line-box {
+    .mobile-stage {
       position: relative;
+      height: 100%;
       overflow: hidden;
-      margin-top: 3vh;
-    }
-    .mobile-line-box:first-child {
-      margin-top: 0;
     }
     .mobile-line {
       position: absolute;
-      top: 0;
+      top: 50%;
       left: 0;
       width: 100%;
       margin: 0;
@@ -164,8 +161,8 @@
       font-family: 'Literata', serif;
       font-optical-sizing: auto;
       font-weight: 400;
-      font-size: clamp(2.2rem, 10vw, 3.2rem);
-      line-height: 1.2;
+      font-size: clamp(2.6rem, 12vw, 4rem);
+      line-height: 1.15;
       color: var(--paper);
       will-change: transform;
     }
@@ -328,7 +325,7 @@
 <body>
 
 <div style="position:fixed; top:8px; right:8px; z-index:9999; background:#B8985A; color:#161510; font-family:sans-serif; font-weight:700; font-size:13px; padding:4px 10px; border-radius:4px;">
-  v7
+  v8
 </div>
 
 <div class="frame">
@@ -350,9 +347,11 @@
       </div>
 
       <div class="mobile-lines">
-        <div class="mobile-line-box"><h1 class="mobile-line" data-i="0">Life is not a story.<sup>&#8482;</sup></h1></div>
-        <div class="mobile-line-box"><h1 class="mobile-line" data-i="1">You are not the hero.</h1></div>
-        <div class="mobile-line-box"><h1 class="mobile-line" data-i="2">There is no way to fail.</h1></div>
+        <div class="mobile-stage">
+          <h1 class="mobile-line" data-i="0">Life is not a story.<sup>&#8482;</sup></h1>
+          <h1 class="mobile-line" data-i="1">You are not the hero.</h1>
+          <h1 class="mobile-line" data-i="2">There is no way to fail.</h1>
+        </div>
       </div>
 
       <div class="scroll-cue">Scroll</div>
@@ -426,20 +425,10 @@
   }
 
   function runMobile() {
-    var boxes = document.querySelectorAll('.mobile-line-box');
     var lines = document.querySelectorAll('.mobile-line');
     var maxIndex = lines.length; // lets the last line fully exit too
-    var gapPx = 10;
+    var gapPx = 24;
     var ticking = false;
-
-    function fitLines() {
-      boxes.forEach(function (box, i) {
-        var line = lines[i];
-        line.style.transform = 'none';
-        var h = line.getBoundingClientRect().height;
-        box.style.height = (h + 6) + 'px';
-      });
-    }
 
     function render() {
       var rect = container.getBoundingClientRect();
@@ -452,9 +441,9 @@
 
       lines.forEach(function (line, i) {
         var delta = i - continuousIndex;
-        var offsetPercent = delta * 100;
-        var offsetGap = delta * gapPx;
-        line.style.transform = 'translateY(calc(' + offsetPercent + '% + ' + offsetGap + 'px))';
+        var xPercent = delta * 100;
+        var xGap = delta * gapPx;
+        line.style.transform = 'translate(calc(' + xPercent + '% + ' + xGap + 'px), -50%)';
       });
 
       if (scrollCue) {
@@ -471,20 +460,9 @@
       }
     }
 
-    function onResize() {
-      fitLines();
-      render();
-    }
-
-    if (document.fonts && document.fonts.ready) {
-      document.fonts.ready.then(onResize);
-    } else {
-      onResize();
-    }
-
     window.addEventListener('scroll', onScroll, { passive: true });
-    window.addEventListener('resize', onResize);
-    onResize();
+    window.addEventListener('resize', render);
+    render();
   }
 
   function runDesktop() {
