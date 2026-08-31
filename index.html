@@ -136,7 +136,7 @@
   }
   @media (max-width: 700px) {
     .hero-scroll {
-      height: 190vh;
+      height: 220vh;
     }
     .hero {
       padding: 6vh 8vw;
@@ -328,7 +328,7 @@
 <body>
 
 <div style="position:fixed; top:8px; right:8px; z-index:9999; background:#B8985A; color:#161510; font-family:sans-serif; font-weight:700; font-size:13px; padding:4px 10px; border-radius:4px;">
-  v11
+  v12
 </div>
 
 <div class="frame">
@@ -428,7 +428,7 @@
   function runMobile() {
     var boxes = document.querySelectorAll('.mobile-line-box');
     var lines = document.querySelectorAll('.mobile-line');
-    var maxIndex = lines.length - 0.4; // let the next page start arriving before the last exit fully finishes
+    var segment = 1 / lines.length;
     var gapPx = 16;
     var ticking = false;
 
@@ -448,10 +448,25 @@
       var progress = total > 0 ? scrolled / total : 0;
       progress = Math.max(0, Math.min(1, progress));
 
-      var continuousIndex = progress * maxIndex;
-
       lines.forEach(function (line, i) {
-        var delta = i - continuousIndex;
+        var segStart = i * segment;
+        var local = (progress - segStart) / segment;
+        local = Math.max(0, Math.min(1, local));
+
+        // The first line starts already at rest (no entrance needed).
+        if (i === 0) {
+          local = 0.25 + local * 0.75;
+        }
+
+        var delta;
+        if (local < 0.25) {
+          delta = 1 - (local / 0.25);          // entering: 1 -> 0
+        } else if (local < 0.75) {
+          delta = 0;                           // holding: stays put for a beat
+        } else {
+          delta = -((local - 0.75) / 0.25);    // exiting: 0 -> -1 (fully clears)
+        }
+
         var xPercent = delta * 100;
         var xGap = delta * gapPx;
         line.style.transform = 'translateX(calc(' + xPercent + '% + ' + xGap + 'px))';
