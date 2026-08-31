@@ -115,8 +115,8 @@
     background: var(--wheat);
     height: 34px;
   }
-  @media (max-width: 600px) {
-    .morph-track {
+  @media (max-width: 700px) {
+    .morph-stage {
       display: none;
     }
   }
@@ -130,6 +130,58 @@
     text-transform: uppercase;
     opacity: 0.7;
     transition: opacity 0.4s ease;
+  }
+  .mobile-lines {
+    display: none;
+  }
+  @media (max-width: 700px) {
+    .hero-scroll {
+      height: auto;
+    }
+    .hero {
+      position: static;
+      height: auto;
+      padding: 6vh 8vw 4vh;
+      display: block;
+    }
+    .scroll-cue {
+      display: none;
+    }
+    .mobile-lines {
+      display: block;
+    }
+    .mobile-line-block {
+      min-height: 82vh;
+      display: flex;
+      align-items: center;
+    }
+    .mobile-line-block h1 {
+      font-family: 'Literata', serif;
+      font-optical-sizing: auto;
+      font-weight: 400;
+      font-size: clamp(2.4rem, 11vw, 3.6rem);
+      line-height: 1.15;
+      color: var(--paper);
+      margin: 0;
+    }
+    .mobile-line-block h1 sup {
+      font-family: 'Inter', sans-serif;
+      font-size: 0.32em;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: var(--wheat);
+      position: relative;
+      top: -0.6em;
+      margin-left: 0.05em;
+    }
+    .mobile-scroll-cue {
+      font-size: 0.72rem;
+      letter-spacing: 0.08em;
+      color: var(--paper-dim);
+      text-transform: uppercase;
+      opacity: 0.7;
+      padding-bottom: 4vh;
+    }
   }
 
   section {
@@ -296,6 +348,13 @@
         </div>
       </div>
 
+      <div class="mobile-lines">
+        <div class="mobile-line-block"><h1>Life is not a story.<sup>&#8482;</sup></h1></div>
+        <div class="mobile-line-block"><h1>You are not the hero.</h1></div>
+        <div class="mobile-line-block"><h1>There is no way to fail.</h1></div>
+        <div class="mobile-scroll-cue">Scroll</div>
+      </div>
+
       <div class="scroll-cue">Scroll</div>
     </div>
   </div>
@@ -353,6 +412,16 @@
 
 <script>
 (function () {
+  function isMobile() {
+    return window.innerWidth <= 700;
+  }
+
+  // On mobile, the three lines are plain stacked blocks revealed by
+  // normal page scroll, no JS needed at all.
+  if (isMobile()) {
+    return;
+  }
+
   var container = document.querySelector('.hero-scroll');
   var stage = document.querySelector('.morph-lines');
   var lines = document.querySelectorAll('.morph-line');
@@ -423,6 +492,9 @@
   }
 
   function onResize() {
+    if (isMobile()) {
+      return;
+    }
     fitLines();
     render();
   }
