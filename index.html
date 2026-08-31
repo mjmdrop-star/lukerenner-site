@@ -136,7 +136,7 @@
   }
   @media (max-width: 700px) {
     .hero-scroll {
-      height: 260vh;
+      height: 190vh;
     }
     .hero {
       padding: 6vh 8vw;
@@ -328,7 +328,7 @@
 <body>
 
 <div style="position:fixed; top:8px; right:8px; z-index:9999; background:#B8985A; color:#161510; font-family:sans-serif; font-weight:700; font-size:13px; padding:4px 10px; border-radius:4px;">
-  v16
+  v17
 </div>
 
 <div class="frame">
@@ -430,7 +430,7 @@
     var lines = document.querySelectorAll('.mobile-line');
     // Slightly less than lines.length on purpose: the last line is still
     // mid-exit, not fully gone, right as the pinned section releases.
-    var maxIndex = lines.length - 0.15;
+    var maxIndex = lines.length - 0.05;
     var gapPx = 16;
     var holdWidth = 0.32; // fraction of travel that stays perfectly still
     var ticking = false;
