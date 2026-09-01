@@ -131,44 +131,71 @@
     opacity: 0.7;
     transition: opacity 0.4s ease;
   }
-  .mobile-lines {
+
+  /* ---- Mobile: fixed header + normal-flow reveal under it ---- */
+  .mobile-fixed-header {
+    display: none;
+  }
+  .mobile-open,
+  .mobile-line-open {
     display: none;
   }
   @media (max-width: 700px) {
-    .hero-scroll {
-      height: 190vh;
-    }
-    .hero {
-      padding: 6vh 8vw;
-    }
-    .mobile-lines {
+    .mobile-fixed-header {
       display: block;
-      position: relative;
-    }
-    .mobile-line-box {
-      position: relative;
-      overflow: hidden;
-      margin-top: 3vh;
-    }
-    .mobile-line-box:first-child {
-      margin-top: 0;
-    }
-    .mobile-line {
-      position: absolute;
+      position: fixed;
       top: 0;
       left: 0;
       width: 100%;
-      margin: 0;
-      white-space: normal;
+      z-index: 100;
+      padding: 2.4vh 8vw;
+      background: var(--ink);
+      border-bottom: 1px solid rgba(237,230,214,0.1);
+    }
+    .eyebrow-fixed {
+      font-size: clamp(0.62rem, 2.6vw, 0.8rem);
+      letter-spacing: 0.03em;
+      color: var(--wheat);
+      white-space: nowrap;
+    }
+    .eyebrow {
+      display: none; /* the fixed header replaces the in-flow eyebrow on mobile */
+    }
+    .hero-scroll {
+      height: auto;
+    }
+    .hero {
+      position: static;
+      height: auto;
+      padding: 0 8vw 6vh;
+      display: block;
+      opacity: 1;
+      animation: none;
+    }
+    .mobile-open {
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+      padding-top: 8.5vh; /* clears the fixed header */
+    }
+    .mobile-photo {
+      flex: 1;
+      min-height: 42vh;
+      margin: 3vh 0 4vh;
+      background: linear-gradient(160deg, #2a2820 0%, #1c1b15 100%);
+      border-radius: 2px;
+    }
+    .mobile-line-open {
+      display: block;
       font-family: 'Literata', serif;
       font-optical-sizing: auto;
       font-weight: 400;
-      font-size: clamp(2.9rem, 13vw, 4.2rem);
-      line-height: 1.2;
+      font-size: clamp(2.6rem, 12vw, 3.8rem);
+      line-height: 1.15;
       color: var(--paper);
-      will-change: transform;
+      margin: 0 0 4vh;
     }
-    .mobile-line sup {
+    .mobile-line-open sup {
       font-family: 'Inter', sans-serif;
       font-size: 0.32em;
       font-weight: 600;
@@ -177,6 +204,9 @@
       position: relative;
       top: -0.6em;
       margin-left: 0.05em;
+    }
+    .mobile-line-stack {
+      padding-top: 6vh;
     }
   }
 
@@ -327,7 +357,11 @@
 <body>
 
 <div style="position:fixed; top:8px; right:8px; z-index:9999; background:#B8985A; color:#161510; font-family:sans-serif; font-weight:700; font-size:13px; padding:4px 10px; border-radius:4px;">
-  v20
+  v21
+</div>
+
+<div class="mobile-fixed-header">
+  <span class="eyebrow-fixed">Luke A. Renner — Filmmaker - Speaker - Consultant</span>
 </div>
 
 <div class="frame">
@@ -348,13 +382,12 @@
         </div>
       </div>
 
-      <div class="mobile-lines">
-        <div class="mobile-line-box"><h1 class="mobile-line" data-i="0">Life is not a<br>story.<sup>&#8482;</sup></h1></div>
-        <div class="mobile-line-box"><h1 class="mobile-line" data-i="1">You are not<br>the hero.</h1></div>
-        <div class="mobile-line-box"><h1 class="mobile-line" data-i="2">There is no<br>way to fail.</h1></div>
+      <div class="mobile-open">
+        <div class="mobile-photo"></div>
+        <h1 class="mobile-line-open">Life is not a story.<sup>&#8482;</sup></h1>
       </div>
-
-      <div class="scroll-cue">Scroll</div>
+      <h1 class="mobile-line-open mobile-line-stack">You are not the hero.</h1>
+      <h1 class="mobile-line-open mobile-line-stack">There is no way to fail.</h1>
     </div>
   </div>
 
@@ -418,93 +451,10 @@
   var container = document.querySelector('.hero-scroll');
   var scrollCue = document.querySelector('.scroll-cue');
 
-  if (isMobile()) {
-    runMobile();
-  } else {
+  // Mobile no longer needs any scroll-driven JS: the fixed header simply
+  // covers content as it scrolls beneath it, plain browser scrolling.
+  if (!isMobile()) {
     runDesktop();
-  }
-
-  function runMobile() {
-    var boxes = document.querySelectorAll('.mobile-line-box');
-    var lines = document.querySelectorAll('.mobile-line');
-    // Slightly less than lines.length on purpose: the last line is still
-    // mid-exit, not fully gone, right as the pinned section releases.
-    var maxIndex = lines.length - 0.34;
-    var gapPx = 16;
-    var holdWidth = 0.32; // fraction of travel that stays perfectly still
-    var ticking = false;
-
-    function fitLines() {
-      boxes.forEach(function (box, i) {
-        var line = lines[i];
-        line.style.transform = 'none';
-        var h = line.getBoundingClientRect().height;
-        box.style.height = (h + 6) + 'px';
-      });
-    }
-
-    // Flat hold near rest, smoothstep ease everywhere else: soft
-    // acceleration in and out instead of a linear, abrupt motion.
-    function shape(delta) {
-      var d = Math.max(-1, Math.min(1, delta));
-      var sign = d < 0 ? -1 : 1;
-      var ad = Math.abs(d);
-      if (ad <= holdWidth) {
-        return 0;
-      }
-      var t = (ad - holdWidth) / (1 - holdWidth);
-      var eased = t * t * (3 - 2 * t); // smoothstep
-      return sign * eased;
-    }
-
-    function render() {
-      var rect = container.getBoundingClientRect();
-      var total = container.offsetHeight - window.innerHeight;
-      var scrolled = -rect.top;
-      var progress = total > 0 ? scrolled / total : 0;
-      // Only clamp the lower bound. Letting progress keep climbing past 1
-      // lets the exit motion keep animating smoothly after release instead
-      // of freezing at whatever state it was in when the section unpinned.
-      progress = Math.max(0, progress);
-
-      var continuousIndex = progress * maxIndex;
-
-      lines.forEach(function (line, i) {
-        var rawDelta = i - continuousIndex;
-        var p = shape(rawDelta);
-        var xPercent = p * 100;
-        var xGap = p * gapPx;
-        line.style.transform = 'translateX(calc(' + xPercent + '% + ' + xGap + 'px))';
-      });
-
-      if (scrollCue) {
-        scrollCue.style.opacity = progress > 0.03 ? '0' : '0.7';
-      }
-
-      ticking = false;
-    }
-
-    function onScroll() {
-      if (!ticking) {
-        window.requestAnimationFrame(render);
-        ticking = true;
-      }
-    }
-
-    function onResize() {
-      fitLines();
-      render();
-    }
-
-    if (document.fonts && document.fonts.ready) {
-      document.fonts.ready.then(onResize);
-    } else {
-      onResize();
-    }
-
-    window.addEventListener('scroll', onScroll, { passive: true });
-    window.addEventListener('resize', onResize);
-    onResize();
   }
 
   function runDesktop() {
