@@ -195,6 +195,13 @@
       line-height: 1.15;
       color: var(--paper);
       margin: 0 0 4vh;
+      opacity: 0;
+      transform: translateY(28px);
+      transition: opacity 0.7s ease, transform 0.7s ease;
+    }
+    .mobile-line-open.is-visible {
+      opacity: 1;
+      transform: translateY(0);
     }
     .mobile-line-open sup {
       font-family: 'Inter', sans-serif;
@@ -358,7 +365,7 @@
 <body>
 
 <div style="position:fixed; top:8px; right:8px; z-index:9999; background:#B8985A; color:#161510; font-family:sans-serif; font-weight:700; font-size:13px; padding:4px 10px; border-radius:4px;">
-  v22
+  v23
 </div>
 
 <div class="mobile-fixed-header">
@@ -452,10 +459,36 @@
   var container = document.querySelector('.hero-scroll');
   var scrollCue = document.querySelector('.scroll-cue');
 
-  // Mobile no longer needs any scroll-driven JS: the fixed header simply
-  // covers content as it scrolls beneath it, plain browser scrolling.
-  if (!isMobile()) {
+  // Mobile: no scroll-position math needed, just a simple reveal-on-enter
+  // animation for each line, using IntersectionObserver so it's cheap
+  // and doesn't fight with scroll the way the old approach did.
+  if (isMobile()) {
+    runMobileReveal();
+  } else {
     runDesktop();
+  }
+
+  function runMobileReveal() {
+    var lines = document.querySelectorAll('.mobile-line-open');
+    if (!('IntersectionObserver' in window)) {
+      lines.forEach(function (line) {
+        line.classList.add('is-visible');
+      });
+      return;
+    }
+    var observer = new IntersectionObserver(
+      function (entries) {
+        entries.forEach(function (entry) {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('is-visible');
+          }
+        });
+      },
+      { threshold: 0.15, rootMargin: '0px 0px -10% 0px' }
+    );
+    lines.forEach(function (line) {
+      observer.observe(line);
+    });
   }
 
   function runDesktop() {
