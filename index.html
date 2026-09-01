@@ -195,13 +195,7 @@
       line-height: 1.15;
       color: var(--paper);
       margin: 0 0 4vh;
-      opacity: 0;
-      transform: translateY(28px);
-      transition: opacity 0.7s ease, transform 0.7s ease;
-    }
-    .mobile-line-open.is-visible {
-      opacity: 1;
-      transform: translateY(0);
+      will-change: transform;
     }
     .mobile-line-open sup {
       font-family: 'Inter', sans-serif;
@@ -215,6 +209,9 @@
     }
     .mobile-line-stack {
       padding-top: 6vh;
+    }
+    .frame {
+      overflow-x: hidden;
     }
   }
 
@@ -365,7 +362,7 @@
 <body>
 
 <div style="position:fixed; top:8px; right:8px; z-index:9999; background:#B8985A; color:#161510; font-family:sans-serif; font-weight:700; font-size:13px; padding:4px 10px; border-radius:4px;">
-  v23
+  v24
 </div>
 
 <div class="mobile-fixed-header">
@@ -459,36 +456,70 @@
   var container = document.querySelector('.hero-scroll');
   var scrollCue = document.querySelector('.scroll-cue');
 
-  // Mobile: no scroll-position math needed, just a simple reveal-on-enter
-  // animation for each line, using IntersectionObserver so it's cheap
-  // and doesn't fight with scroll the way the old approach did.
+  // Mobile: each line slides in from the right, holds for a beat, then
+  // slides out left, timed to finish right as it reaches the fixed
+  // header, driven purely by that line's own position, not a shared
+  // pinned region, so adjacent lines naturally overlap.
   if (isMobile()) {
-    runMobileReveal();
+    runMobileRelay();
   } else {
     runDesktop();
   }
 
-  function runMobileReveal() {
+  function runMobileRelay() {
+    var headerEl = document.querySelector('.mobile-fixed-header');
     var lines = document.querySelectorAll('.mobile-line-open');
-    if (!('IntersectionObserver' in window)) {
-      lines.forEach(function (line) {
-        line.classList.add('is-visible');
-      });
-      return;
+    var gapPx = 16;
+    var holdWidth = 0.32;
+    var ticking = false;
+
+    // Flat hold near rest, smoothstep ease everywhere else.
+    function shape(delta) {
+      var d = Math.max(-1, Math.min(1, delta));
+      var sign = d < 0 ? -1 : 1;
+      var ad = Math.abs(d);
+      if (ad <= holdWidth) {
+        return 0;
+      }
+      var t = (ad - holdWidth) / (1 - holdWidth);
+      var eased = t * t * (3 - 2 * t); // smoothstep
+      return sign * eased;
     }
-    var observer = new IntersectionObserver(
-      function (entries) {
-        entries.forEach(function (entry) {
-          if (entry.isIntersecting) {
-            entry.target.classList.add('is-visible');
-          }
-        });
-      },
-      { threshold: 0.15, rootMargin: '0px 0px -10% 0px' }
-    );
-    lines.forEach(function (line) {
-      observer.observe(line);
-    });
+
+    function render() {
+      var headerH = headerEl ? headerEl.offsetHeight : 0;
+      var viewportH = window.innerHeight;
+      var holdY = viewportH * 0.38;
+
+      lines.forEach(function (line) {
+        var top = line.getBoundingClientRect().top;
+        var s;
+        if (top >= holdY) {
+          var enterRange = Math.max(1, viewportH - holdY);
+          s = (top - holdY) / enterRange;
+        } else {
+          var exitRange = Math.max(1, holdY - headerH);
+          s = -((holdY - top) / exitRange);
+        }
+        var p = shape(s);
+        var xPercent = p * 100;
+        var xGap = p * gapPx;
+        line.style.transform = 'translateX(calc(' + xPercent + '% + ' + xGap + 'px))';
+      });
+
+      ticking = false;
+    }
+
+    function onScroll() {
+      if (!ticking) {
+        window.requestAnimationFrame(render);
+        ticking = true;
+      }
+    }
+
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', render);
+    render();
   }
 
   function runDesktop() {
