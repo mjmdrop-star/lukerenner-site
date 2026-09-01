@@ -362,7 +362,7 @@
 <body>
 
 <div style="position:fixed; top:8px; right:8px; z-index:9999; background:#B8985A; color:#161510; font-family:sans-serif; font-weight:700; font-size:13px; padding:4px 10px; border-radius:4px;">
-  v24
+  v25
 </div>
 
 <div class="mobile-fixed-header">
@@ -490,15 +490,22 @@
       var headerH = headerEl ? headerEl.offsetHeight : 0;
       var viewportH = window.innerHeight;
       var holdY = viewportH * 0.38;
+      var looseness = 1.5; // more scroll distance per unit of motion, gentler feel
 
-      lines.forEach(function (line) {
+      lines.forEach(function (line, i) {
         var top = line.getBoundingClientRect().top;
         var s;
         if (top >= holdY) {
-          var enterRange = Math.max(1, viewportH - holdY);
-          s = (top - holdY) / enterRange;
+          if (i === 0) {
+            // The opening line is already at rest on load: it only
+            // ever exits, it never plays an entrance.
+            s = 0;
+          } else {
+            var enterRange = Math.max(1, (viewportH - holdY) * looseness);
+            s = (top - holdY) / enterRange;
+          }
         } else {
-          var exitRange = Math.max(1, holdY - headerH);
+          var exitRange = Math.max(1, (holdY - headerH) * looseness);
           s = -((holdY - top) / exitRange);
         }
         var p = shape(s);
