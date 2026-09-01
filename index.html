@@ -185,12 +185,15 @@
       margin: 3vh 0 4vh;
       border-radius: 2px;
       overflow: hidden;
+      background: var(--ink);
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
     .mobile-photo img {
       width: 100%;
       height: 100%;
-      object-fit: cover;
-      object-position: center 20%;
+      object-fit: contain;
       display: block;
     }
     .mobile-line-open {
@@ -369,7 +372,7 @@
 <body>
 
 <div style="position:fixed; top:8px; right:8px; z-index:9999; background:#B8985A; color:#161510; font-family:sans-serif; font-weight:700; font-size:13px; padding:4px 10px; border-radius:4px;">
-  v26
+  v28
 </div>
 
 <div class="mobile-fixed-header">
@@ -495,7 +498,7 @@
 
     function render() {
       var headerH = headerEl ? headerEl.offsetHeight : 0;
-      var viewportH = window.innerHeight;
+      var viewportH = (window.visualViewport && window.visualViewport.height) || window.innerHeight;
       var holdY = viewportH * 0.38;
       var looseness = 1.5; // more scroll distance per unit of motion, gentler feel
 
@@ -533,6 +536,9 @@
 
     window.addEventListener('scroll', onScroll, { passive: true });
     window.addEventListener('resize', render);
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', render);
+    }
     render();
   }
 
