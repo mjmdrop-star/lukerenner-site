@@ -175,15 +175,14 @@
     .mobile-open {
       display: flex;
       flex-direction: column;
-      min-height: 86vh;
-      min-height: 86svh; /* stable on iOS Safari; vh above is the fallback */
+      min-height: 101.5vh;
+      min-height: 101.5svh; /* stable on iOS Safari; vh above is the fallback */
       padding-top: 8.5vh; /* clears the fixed header */
     }
     .mobile-photo {
       flex: 1;
       min-height: 18vh;
-      margin: 3vh 0 4vh;
-      border-radius: 2px;
+      margin: 1.5vh -8vw 1vh; /* bleeds full-bleed to the viewport edges, matching .hero's 8vw side padding */
       overflow: hidden;
       background: var(--ink);
       position: relative;
@@ -194,7 +193,7 @@
       left: 0;
       width: 100%;
       height: 100%;
-      object-fit: contain;
+      object-fit: cover; /* container no longer matches the photo's aspect ratio once enlarged, so contain would letterbox */
       display: block;
     }
     .mobile-line-open {
@@ -373,7 +372,7 @@
 <body>
 
 <div style="position:fixed; top:8px; right:8px; z-index:9999; background:#B8985A; color:#161510; font-family:sans-serif; font-weight:700; font-size:13px; padding:4px 10px; border-radius:4px;">
-  v33
+  v34
 </div>
 
 <div class="mobile-fixed-header">
